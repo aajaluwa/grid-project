@@ -158,16 +158,21 @@ def arcgis_geojson(service_url: str, layer: int, name: str, offset: float = 0.01
 ORGS = ["https://services7.arcgis.com/FGr1D95XCGALKXqM/arcgis/rest/services",
         "https://services2.arcgis.com/vHeD2bHG1G3sW5YZ/arcgis/rest/services",
         "https://services.arcgis.com/xOi1kZaI0eWDREZv/arcgis/rest/services"]
-KNOWN = {"balancing_authorities": ("https://services7.arcgis.com/FGr1D95XCGALKXqM/ArcGIS/rest/services/"
-                                   "Balancing_Authorities/FeatureServer", 255)}
+EIA_ORG = "https://services7.arcgis.com/FGr1D95XCGALKXqM/arcgis/rest/services"
+# EIA Energy Atlas layers that its public service listing hides but that answer anonymous queries. Balancing-authority
+# boundaries are no longer public (token required): territories are derived from EIA-860M plant registrations instead.
+KNOWN = {
+    "crude_pipelines": (f"{EIA_ORG}/CrudeOil_Pipelines_US_EIA/FeatureServer", None),
+    "refineries": (f"{EIA_ORG}/Petroleum_Refineries_US_EIA/FeatureServer", None),
+    "gas_storage": (f"{EIA_ORG}/Natural_Gas_Underground_Storage/FeatureServer", None),
+}
 SEARCH = {
     "crude_pipelines": "Crude Oil Pipelines",
     "refineries": "Petroleum Refineries",
     "gas_storage": "Natural Gas Underground Storage",
-    "lng": "Liquefied Natural Gas Import Export Terminals",
+    "lng": "LNG Import Export Terminals",
 }
 WANT = {
-    "balancing_authorities": re.compile(r"^Balancing_Authorit", re.I),
     "gas_pipelines": re.compile(r"NaturalGas.*(Inter|Pipeline)", re.I),
     "crude_pipelines": re.compile(r"Crude.*Pipeline", re.I),
     "refineries": re.compile(r"Refiner", re.I),
@@ -185,7 +190,7 @@ def arcgis_search(title: str) -> str | None:
     def score(i):
         owner = (i.get("owner") or "").lower()
         t = (i.get("title") or "").lower()
-        return (("eia" in owner) * 4 + ("bts" in owner or "ntad" in t) * 2 + (title.lower() in t) * 3
+        return (("FGr1D95XCGALKXqM" in (i.get("url") or "")) * 20 + ("eia" in owner) * 4 + ("bts" in owner or "ntad" in t) * 2 + (title.lower() in t) * 3
                 + ("eia" in t) + bool(i.get("url")))
     items = [i for i in items if i.get("url")]
     if not items:
@@ -208,6 +213,9 @@ def eia_atlas():
         if key in KNOWN:
             svc, layer = KNOWN[key]
             try:
+                if layer is None:
+                    meta = json.loads(get(svc + "?f=json"))
+                    layer = (meta.get("layers") or [{"id": 0}])[0]["id"]
                 MANIFEST.setdefault("atlas", {})[key] = {"service": svc, "layer": layer}
                 arcgis_geojson(svc, layer, key, offset=0.02)
                 continue
@@ -271,9 +279,18 @@ def osm_data_centers():
 area["ISO3166-1"="US"][admin_level=2]->.us;
 (nwr["telecom"="data_center"](area.us);nwr["building"="data_center"](area.us););
 out center tags;"""
-    url = "https://overpass-api.de/api/interpreter"
-    body = get(url, data=urllib.parse.urlencode({"data": query}).encode(), timeout=400)
-    save("osm_data_centers.json", body, url)
+    last = None
+    for url in ("https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter",
+                "https://overpass.private.coffee/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter"):
+        try:
+            body = get(url, data=urllib.parse.urlencode({"data": query}).encode(), timeout=400)
+            if body.lstrip().startswith(b"{") and b'"elements"' in body[:2000]:
+                save("osm_data_centers.json", body, url)
+                return
+            last = f"{url}: not JSON"
+        except RuntimeError as exc:
+            last = exc
+    raise RuntimeError(str(last))
 
 
 @step("world_interim")
