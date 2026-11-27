@@ -1,3 +1,24 @@
+# Grid Project: the U.S. energy system as a strategy map
+
+**Live:** https://aajaluwa.github.io/grid-project/ · Built on [usaciv](https://karpathy.ai/usaciv) by Andrej Karpathy (MIT),
+forked from the unmodified import [pablo-mayrgundter/usaciv](https://github.com/pablo-mayrgundter/usaciv).
+
+Every U.S. power plant (EIA-860M), every grid operator with an hourly replay of the last two weeks (EIA-930), the
+interconnection queue (LBNL Queued Up), gas and crude pipelines, refineries, gas storage and data centers
+(EIA Energy Atlas, OpenStreetMap), on usaciv's hex map. Analyst mode uses plain labels; Story mode
+(`#voice=story`) uses the game vocabulary.
+
+- **Data refresh:** `.github/workflows/fetch-raw.yml` downloads the sources monthly in GitHub Actions and keeps them
+  on the `raw` branch (a failed download keeps the last good copy); `.github/workflows/build-site.yml` runs
+  `python -m energy build`, checks every milestone gate, commits `web/data` and deploys GitHub Pages.
+- **Locally:** `git fetch origin raw && git archive FETCH_HEAD raw | tar -x`, then
+  `uv run python -m energy build --raw raw && uv run python -m energy check && uv run python -m pipeline serve`.
+- **Data contracts:** `docs/ENERGY_CONTRACTS.md` (energy files) and `docs/DATA_CONTRACTS.md` (usaciv's).
+
+The rest of this README is usaciv's own documentation.
+
+---
+
 # usaciv: the United States as a strategy game, built from real data
 
 **Live: [karpathy.ai/usaciv](https://karpathy.ai/usaciv)** · Source code:

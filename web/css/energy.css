@@ -35,3 +35,7 @@ body.voice-story .en-head h2 { color: #ffd98a; }
 #btn-voice[aria-pressed="true"] { background: #4a3a1a; border-color: #8a6a2a; }
 #btn-voice .lbl, #btn-replay .lbl { display: inline !important; margin-left: 4px; }
 #btn-voice, #btn-replay { width: auto !important; padding: 0 9px; }
+.en-moments { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.en-moment { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; text-align: left; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #eee6d2; border-radius: 6px; padding: 5px 8px; cursor: pointer; font-size: 12px; }
+.en-moment b { font-size: 13px; color: #ffd166; }
+.en-moment.on, .en-moment:hover { border-color: #ffd166; }

@@ -13,6 +13,7 @@ export function createReplay(app, voice) {
   let h = 0, playing = false, timer = 0, speed = 250, selected = null, dock = null;
   let anchors = new Map(); // id -> {x, y, ba}
   let flowsByBa = new Map();
+  let moments = [];
 
   const ready = () => !!grid;
   const n = () => grid?.hours?.n || 0;
@@ -32,6 +33,7 @@ export function createReplay(app, voice) {
           }
         }
         if (h >= n()) h = n() - 1;
+        moments = computeMoments();
         return g;
       });
     }
@@ -68,6 +70,35 @@ export function createReplay(app, voice) {
       net += f.a === ba ? v : -v;
     }
     return net;
+  }
+
+  // Moments worth replaying, picked from the data itself (no hand-chosen events).
+  function computeMoments() {
+    const out = [];
+    let best = { peak: [-1, -Infinity], low: [-1, Infinity], solar: [-1, -1], wind: [-1, -1], flow: [-1, 0, null] };
+    for (let k = 0; k < n(); k++) {
+      const u = usAt(k);
+      if (u.reported < 0.85 * Object.keys(grid.hourly.demand).length) continue;
+      const tot = u.mix.reduce((a, [, v]) => a + v, 0) || 1;
+      const share = (f) => (u.mix.find(([x]) => x === f)?.[1] || 0) / tot;
+      if (u.demand > best.peak[1]) best.peak = [k, u.demand];
+      if (u.demand < best.low[1]) best.low = [k, u.demand];
+      if (share("solar") > best.solar[1]) best.solar = [k, share("solar")];
+      if (share("wind") > best.wind[1]) best.wind = [k, share("wind")];
+    }
+    for (const f of grid.hourly.interchange) {
+      f.v.forEach((v, k) => { if (v != null && Math.abs(v) > Math.abs(best.flow[1])) best.flow = [k, v, f]; });
+    }
+    const pct = (x) => `${(100 * x).toFixed(0)}%`;
+    if (best.peak[0] >= 0) out.push({ k: best.peak[0], label: "Peak demand", story: "The hungriest hour", text: fmtMW(best.peak[1]) });
+    if (best.low[0] >= 0) out.push({ k: best.low[0], label: "Lowest demand", story: "The quietest hour", text: fmtMW(best.low[1]) });
+    if (best.solar[0] >= 0) out.push({ k: best.solar[0], label: "Highest solar share", story: "The sun's finest hour", text: pct(best.solar[1]) });
+    if (best.wind[0] >= 0) out.push({ k: best.wind[0], label: "Highest wind share", story: "The wind's finest hour", text: pct(best.wind[1]) });
+    if (best.flow[2]) {
+      const f = best.flow[2], from = best.flow[1] > 0 ? f.a : f.b, to = best.flow[1] > 0 ? f.b : f.a;
+      out.push({ k: best.flow[0], ba: to, label: `Largest flow: ${from} → ${to}`, story: `The great caravan: ${from} → ${to}`, text: fmtMW(Math.abs(best.flow[1])) });
+    }
+    return out;
   }
 
   // ---- overlay ----------------------------------------------------------------------------------------------------
@@ -264,6 +295,8 @@ export function createReplay(app, voice) {
           </select></div>
         <input class="en-slider" type="range" min="0" max="${n() - 1}" value="${h}" aria-label="Hour of the replay">
       </div>
+      ${moments.length ? `<section class="en-sec"><h4>${story ? "Legendary hours" : "Moments in this window"}</h4><div class="en-moments">${moments.map((m) =>
+        `<button class="en-moment${m.k === h ? " on" : ""}" data-moment="${m.k}" ${m.ba ? `data-mba="${esc(m.ba)}"` : ""}><span>${esc(story ? m.story : m.label)}</span><b>${esc(m.text)}</b></button>`).join("")}</div></section>` : ""}
       <section class="en-sec"><h4>${story ? "The whole realm" : "Lower 48"} this hour</h4>
         <div class="en-kpis"><div><span>${story ? "Hunger" : "Demand"}</span><b>${esc(fmtMW(us.demand))}</b></div>
         <div><span>${story ? "Output" : "Generation"}</span><b>${esc(fmtMW(usGen))}</b></div>
@@ -281,6 +314,7 @@ export function createReplay(app, voice) {
     if (t.hasAttribute("data-close")) app.setMode(null);
     else if (t.hasAttribute("data-play")) toggle();
     else if (t.dataset.step) go(h + Number(t.dataset.step));
+    else if (t.dataset.moment) { stop(); h = Number(t.dataset.moment); if (t.dataset.mba) select(t.dataset.mba, true); else go(h); }
     else if (t.dataset.ba) select(t.dataset.ba, true);
     else if (t.hasAttribute("data-clear")) select(null);
   }

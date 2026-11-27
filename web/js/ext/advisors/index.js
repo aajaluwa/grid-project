@@ -14,28 +14,30 @@ import { esc, el } from "./core/util.js";
 import { icon } from "../../ui/icon.js";
 
 export const ADVISORS = [
+  { id: "capital", name: "Grid & Capital", role: "Minister of Power", color: "#e0a030", dark: "#3a2608", blurb: "The whole fleet, what is being built and retired, and the queue to connect.", load: () => import("./views/capital.js") },
   { id: "energy", name: "Energy & Resources", role: "Minister of Power", color: "#d98a2b", dark: "#3a1f08", blurb: "Where the power comes from, and what lies underground.", load: () => import("./views/energy.js") },
   { id: "economy", name: "Economy", role: "Treasurer", color: "#c9a43a", dark: "#3a2c08", blurb: "Who makes what: GDP by industry and the metros that lead it.", load: () => import("./views/economy.js") },
   { id: "people", name: "People", role: "Keeper of the Census", color: "#c46a4f", dark: "#3a140c", blurb: "Where people live, where they are moving, how old and how new.", load: () => import("./views/people.js") },
   { id: "prosperity", name: "Prosperity & Housing", role: "Steward of the Hearth", color: "#3f9c82", dark: "#082a22", blurb: "Incomes, home prices, rents and who is being left behind.", load: () => import("./views/prosperity.js") },
   { id: "knowledge", name: "Knowledge", role: "Royal Scholar", color: "#4a86d6", dark: "#0a1c3a", blurb: "Degrees, broadband and the science workforce.", load: () => import("./views/knowledge.js") },
   { id: "land", name: "Land", role: "Surveyor General", color: "#6e9a3c", dark: "#18280a", blurb: "Forest, farmland, desert and city: what covers the country.", load: () => import("./views/land.js") },
-  { id: "military", name: "Military", role: "General", color: "#8796ab", dark: "#141b26", blurb: "Bases and ranges, troops and defense dollars by state, and where veterans live.", load: () => import("./views/military.js") },
+  // { id: "military" ... } and { id: "culture" ... } are off in grid-project (energy scope); see git history.
+  { hidden: true, id: "military", name: "Military", role: "General", color: "#8796ab", dark: "#141b26", blurb: "Bases and ranges, troops and defense dollars by state, and where veterans live.", load: () => import("./views/military.js") },
   { id: "commerce", name: "Commerce", role: "Master of Trade", color: "#2fa4b8", dark: "#062630", blurb: "The great freight routes between metros, and the busiest ports and airports.", load: () => import("./views/commerce.js") },
-  { id: "culture", name: "Culture", role: "Keeper of Wonders", color: "#c25b9a", dark: "#2e0c22", blurb: "Wonders of the land, faith and wellbeing, and the disasters places endure.", load: () => import("./views/culture.js") },
+  { hidden: true, id: "culture", name: "Culture", role: "Keeper of Wonders", color: "#c25b9a", dark: "#2e0c22", blurb: "Wonders of the land, faith and wellbeing, and the disasters places endure.", load: () => import("./views/culture.js") },
   { id: "explorer", name: "Explorer", role: "Cartographer", color: "#9a7bc9", dark: "#1e1236", blurb: "Slice and dice every number: any level, any columns, any chart.", load: () => import("./views/explorer.js") },
 ];
 const byId = new Map(ADVISORS.map((a) => [a.id, a]));
 // The council picker groups its advisors (any advisor not listed here is added to the last group).
 const COUNCIL = (() => {
   const g = [
-    { label: "Wealth and work", ids: ["economy", "prosperity", "commerce", "energy"] },
-    { label: "People and land", ids: ["people", "knowledge", "culture", "land"] },
-    { label: "Defense", ids: ["military"] },
+    { label: "Energy", ids: ["capital", "energy"] },
+    { label: "Wealth and work", ids: ["economy", "prosperity", "commerce"] },
+    { label: "People and land", ids: ["people", "knowledge", "land"] },
     { label: "Your own questions", ids: ["explorer"] },
   ];
   const listed = new Set(g.flatMap((x) => x.ids));
-  g[g.length - 1].ids.push(...ADVISORS.filter((a) => !listed.has(a.id)).map((a) => a.id));
+  g[g.length - 1].ids.push(...ADVISORS.filter((a) => !listed.has(a.id) && !a.hidden).map((a) => a.id));
   return g;
 })();
 // 460 px, narrower below 1200 px wide so the whole country still fits beside the dock (matches advisors.css).
