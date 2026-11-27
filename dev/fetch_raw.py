@@ -66,20 +66,35 @@ def step(name):
 @step("eia_860m")
 def eia_860m():
     base = "https://www.eia.gov/electricity/data/eia860m/"
-    page = get(base).decode("utf-8", "replace")
-    links = re.findall(r"((?:archive/)?xls/([a-z]+)_generator(\d{4})\.xlsx)", page, re.I)
     found = {}
-    for rel, month, year in links:
-        if month.lower() in MONTHS:
-            key = (int(year), MONTHS.index(month.lower()))
-            if key not in found or found[key].startswith("archive/"):
-                found[key] = rel
-    if not found:
-        raise RuntimeError("no generator workbook links on the EIA-860M page")
-    key = max(found)
-    url = base + found[key]
-    save("eia860m.xlsx", get(url), url)
-    MANIFEST["eia860m_month"] = f"{key[0]}-{key[1] + 1:02d}"
+    try:
+        page = get(base).decode("utf-8", "replace")
+        for rel, month, year in re.findall(r"((?:archive/)?xls/([a-z]+)_generator(\d{4})\.xlsx)", page, re.I):
+            if month.lower() in MONTHS:
+                key = (int(year), MONTHS.index(month.lower()))
+                if key not in found or found[key].startswith("archive/"):
+                    found[key] = rel
+    except RuntimeError as exc:
+        print(f"  landing page: {exc}")
+    y, m = date.today().year, date.today().month - 1
+    for _ in range(14):
+        found.setdefault((y, m), f"xls/{MONTHS[m]}_generator{y}.xlsx")
+        y, m = (y, m - 1) if m > 0 else (y - 1, 11)
+    for key in sorted(found, reverse=True):
+        rel = found[key]
+        for url in (base + rel, base + "archive/" + rel.split("/")[-1] if not rel.startswith("archive/") else None):
+            if not url:
+                continue
+            try:
+                body = get(url)
+            except RuntimeError:
+                continue
+            if body[:2] == b"PK":
+                save("eia860m.xlsx", body, url)
+                MANIFEST["eia860m_month"] = f"{key[0]}-{key[1] + 1:02d}"
+                return
+            print(f"  {url}: not a workbook")
+    raise RuntimeError("no EIA-860M workbook found")
 
 
 @step("eia_930")
@@ -141,15 +156,42 @@ def arcgis_geojson(service_url: str, layer: int, name: str, offset: float = 0.01
 
 
 ORGS = ["https://services7.arcgis.com/FGr1D95XCGALKXqM/arcgis/rest/services",
-        "https://services2.arcgis.com/vHeD2bHG1G3sW5YZ/arcgis/rest/services"]
+        "https://services2.arcgis.com/vHeD2bHG1G3sW5YZ/arcgis/rest/services",
+        "https://services.arcgis.com/xOi1kZaI0eWDREZv/arcgis/rest/services"]
+KNOWN = {"balancing_authorities": ("https://services7.arcgis.com/FGr1D95XCGALKXqM/ArcGIS/rest/services/"
+                                   "Balancing_Authorities/FeatureServer", 255)}
+SEARCH = {
+    "crude_pipelines": "Crude Oil Pipelines",
+    "refineries": "Petroleum Refineries",
+    "gas_storage": "Natural Gas Underground Storage",
+    "lng": "Liquefied Natural Gas Import Export Terminals",
+}
 WANT = {
     "balancing_authorities": re.compile(r"^Balancing_Authorit", re.I),
     "gas_pipelines": re.compile(r"NaturalGas.*(Inter|Pipeline)", re.I),
     "crude_pipelines": re.compile(r"Crude.*Pipeline", re.I),
     "refineries": re.compile(r"Refiner", re.I),
-    "gas_storage": re.compile(r"(Underground|NaturalGas).*Storage", re.I),
+    "gas_storage": re.compile(r"(Underground.*Storage|Storage_Fields|NaturalGas_Storage)", re.I),
     "lng": re.compile(r"LNG", re.I),
 }
+
+
+def arcgis_search(title: str) -> str | None:
+    """Find a Feature Service by title on ArcGIS Online, preferring EIA- or BTS-owned items."""
+    q = urllib.parse.urlencode({"q": f'title:"{title}" AND type:"Feature Service"', "f": "json", "num": 25})
+    d = json.loads(get("https://www.arcgis.com/sharing/rest/search?" + q))
+    items = d.get("results", [])
+    MANIFEST.setdefault("search", {})[title] = [(i.get("title"), i.get("owner"), i.get("url")) for i in items[:8]]
+    def score(i):
+        owner = (i.get("owner") or "").lower()
+        t = (i.get("title") or "").lower()
+        return (("eia" in owner) * 4 + ("bts" in owner or "ntad" in t) * 2 + (title.lower() in t) * 3
+                + ("eia" in t) + bool(i.get("url")))
+    items = [i for i in items if i.get("url")]
+    if not items:
+        return None
+    best = max(items, key=score)
+    return best["url"].rstrip("/")
 
 
 @step("eia_atlas")
@@ -163,6 +205,14 @@ def eia_atlas():
             catalog[org] = f"error {exc}"
     save("atlas_catalog.json", json.dumps(catalog, indent=1).encode(), "; ".join(ORGS))
     for key, pat in WANT.items():
+        if key in KNOWN:
+            svc, layer = KNOWN[key]
+            try:
+                MANIFEST.setdefault("atlas", {})[key] = {"service": svc, "layer": layer}
+                arcgis_geojson(svc, layer, key, offset=0.02)
+                continue
+            except Exception as exc:  # noqa: BLE001
+                MANIFEST["errors"][f"atlas_{key}_known"] = str(exc)[:300]
         hit = None
         for org, names in catalog.items():
             if isinstance(names, list):
@@ -172,11 +222,15 @@ def eia_atlas():
                         break
             if hit:
                 break
-        if not hit:
+        svc = None
+        if hit:
+            svc = f"{hit[0]}/{hit[1]}/FeatureServer"
+        elif key in SEARCH:
+            svc = arcgis_search(SEARCH[key])
+        if not svc:
             MANIFEST["errors"][f"atlas_{key}"] = "no matching service"
             continue
-        org, n = hit
-        svc = f"{org}/{n}/FeatureServer"
+        n = svc.rstrip("/").split("/")[-2]
         try:
             meta = json.loads(get(svc + "?f=json"))
             layers = meta.get("layers") or []
@@ -189,13 +243,26 @@ def eia_atlas():
 
 @step("lbnl_queue")
 def lbnl_queue():
-    page = get("https://emp.lbl.gov/queues").decode("utf-8", "replace")
-    links = re.findall(r'href="([^"]+\.xlsx[^"]*)"', page, re.I)
-    links = [urllib.parse.urljoin("https://emp.lbl.gov/queues", l) for l in links]
+    hdr = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36",
+           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"}
+    links = []
+    for page_url in ("https://emp.lbl.gov/queues",
+                     "https://eta-publications.lbl.gov/publications/us-interconnection-queue-data-0"):
+        try:
+            page = get(page_url, headers=hdr).decode("utf-8", "replace")
+        except RuntimeError as exc:
+            print(f"  {page_url}: {exc}")
+            continue
+        links += [urllib.parse.urljoin(page_url, l) for l in re.findall(r'href="([^"]+\.xlsx[^"]*)"', page, re.I)]
     MANIFEST["lbnl_links"] = links[:10]
     if not links:
         raise RuntimeError("no .xlsx link on emp.lbl.gov/queues")
-    save("lbnl_queue.xlsx", get(links[0]), links[0])
+    for link in links:
+        body = get(link, headers=hdr)
+        if body[:2] == b"PK":
+            save("lbnl_queue.xlsx", body, link)
+            return
+    raise RuntimeError(f"no workbook among {links[:5]}")
 
 
 @step("osm_data_centers")
