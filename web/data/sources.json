@@ -1378,6 +1378,27 @@
   ]
  },
  {
+  "id": "eia_retail_prices",
+  "title": "Electric Power Monthly, table 5.6.A: average retail price by state and sector",
+  "publisher": "U.S. Energy Information Administration",
+  "homepage": "https://www.eia.gov/electricity/monthly/",
+  "license": "Public domain (U.S. Government work)",
+  "description": "Electric Power Monthly, table 5.6.A: average retail price by state and sector",
+  "used_for": [
+   "Household price lenses"
+  ],
+  "vintage": "Electric Power Monthly table 5.6.A, September 2026",
+  "files": [
+   {
+    "file": "eia_retail_prices.xlsx",
+    "url": "https://www.eia.gov/electricity/monthly/xls/table_5_06_a.xlsx",
+    "retrieved": "2026-11-27T05:04:53+00:00",
+    "sha256": "136b5c59a42e5a731e79d9a6703b46f2f16bd3c2e39e985f7f236a0a6ba302ed",
+    "bytes": 19710
+   }
+  ]
+ },
+ {
   "id": "eia_gas_pipelines",
   "title": "Natural gas interstate and intrastate pipelines",
   "publisher": "U.S. Energy Information Administration",

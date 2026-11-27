@@ -200,3 +200,43 @@ def datacenter_lens(world, sites):
                 description=("Data center sites tagged in OpenStreetMap (telecom=data_center or building=data_center), "
                              "counted per hex. © OpenStreetMap contributors, ODbL."),
                 note="Crowd-mapped and incomplete; counts sites, not power demand.")
+
+
+def retail_prices(world, raw: Path):
+    """State residential electricity price (EIA Electric Power Monthly table 5.6.A), on every hex of the state."""
+    import re as _re
+    p = raw / "eia_retail_prices.xlsx"
+    if not p.exists():
+        return None
+    by_name = {s["name"]: i for i, s in enumerate(world.states)}
+    cur, chg, month = {}, {}, ""
+    for row in xlsx_rows(p):
+        vals = list(row.values())
+        if not vals:
+            continue
+        if not month and vals[0] and "by State," in vals[0]:
+            m = _re.search(r"by State, (\w+ \d{4})", vals[0])
+            month = m.group(1) if m else ""
+        k = by_name.get((vals[0] or "").strip())
+        if k is None or len(vals) < 3:
+            continue
+        now, before = num(vals[1]), num(vals[2])
+        if now is not None:
+            cur[k] = round(now, 2)
+            if before:
+                chg[k] = round(now / before - 1, 4)
+    price = [cur.get(world.owner[i]) if world.owner[i] >= 0 else None for i in range(world.size)]
+    change = [chg.get(world.owner[i]) if world.owner[i] >= 0 else None for i in range(world.size)]
+    desc = (f"Average residential price of electricity in {month}, by state (EIA Electric Power Monthly, table 5.6.A). "
+            "Every hex of a state shows the state's figure.")
+    print(f"    retail prices: {len(cur)} states, {month}")
+    return [
+        lens("price_res", "Household power price", "cents per kWh", price, group="capital", fmt="float", ramp=RED_RAMP,
+             higher="bad", source="eia_retail_prices", emoji="💡", description=desc,
+             note=f"{month}; one value per state, so a utility's own rate can differ a lot."),
+        lens("price_res_change", "Price change in a year", "change vs a year earlier", change, group="capital",
+             fmt="pct", ramp=["#1f5f8a", "#7cc4e4", "#f2f2f2", "#e8774a", "#7f2a26"], higher="bad",
+             source="eia_retail_prices", emoji="📈", domain=[-0.15, 0.15],
+             description=f"Residential price in {month} against the same month a year earlier (EIA table 5.6.A).",
+             note="Single-month comparison: seasonal and billing effects move it."),
+    ], month

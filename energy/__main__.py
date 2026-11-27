@@ -28,6 +28,9 @@ SOURCES = {
                    "Lawrence Berkeley National Laboratory and GridTracker / Interconnection.fyi",
                    "https://emp.lbl.gov/queues", "CC BY 4.0 (credit Lawrence Berkeley National Laboratory)",
                    ["lbnl_queue.xlsx"], ["Interconnection queue lenses"]),
+    "eia_retail_prices": ("Electric Power Monthly, table 5.6.A: average retail price by state and sector",
+                          "U.S. Energy Information Administration", "https://www.eia.gov/electricity/monthly/",
+                          "Public domain (U.S. Government work)", ["eia_retail_prices.xlsx"], ["Household price lenses"]),
     "eia_gas_pipelines": ("Natural gas interstate and intrastate pipelines", "U.S. Energy Information Administration",
                           "https://atlas.eia.gov/", "Public domain (U.S. Government work)", ["gas_pipelines.geojson"],
                           ["Gas pipelines on the map"]),
@@ -91,6 +94,12 @@ def build(raw: Path):
         queue_summary = q[1]
         used.add("lbnl_queue")
         vint["lbnl_queue"] = "Queued Up 2026 edition (data through 2025)"
+
+    rp = lenses.retail_prices(world, raw)
+    if rp:
+        energy_lenses += rp[0]
+        used.add("eia_retail_prices")
+        vint["eia_retail_prices"] = f"Electric Power Monthly table 5.6.A, {rp[1]}"
 
     print("== oil, gas and sites (M4)")
     pipes, psrc = infra.pipelines(world, raw)
