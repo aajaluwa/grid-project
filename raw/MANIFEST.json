@@ -1,0 +1,122 @@
+{
+ "started": "2026-11-27T05:03:26+00:00",
+ "files": {
+  "eia860m.xlsx": {
+   "url": "https://www.eia.gov/electricity/data/eia860m/xls/october_generator2026.xlsx",
+   "bytes": 14033583,
+   "sha256": "18b37ac0aeb9e78da6fb0733dc857df2ed5c8f33dc506872fac7cdd61ab98a2c",
+   "retrieved": "2026-11-27T05:03:27+00:00"
+  },
+  "EIA930_BALANCE_2026_Jul_Dec.csv.gz": {
+   "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2026_Jul_Dec.csv",
+   "bytes": 38909525,
+   "sha256": "9db3eb23f018806b5d69b792c9200dacb2b9d1b5169d8714870f21f0bd3d6b31",
+   "retrieved": "2026-11-27T05:03:28+00:00"
+  },
+  "EIA930_INTERCHANGE_2026_Jul_Dec.csv.gz": {
+   "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2026_Jul_Dec.csv",
+   "bytes": 83274729,
+   "sha256": "da821fd17364521cc34809ff5175095ee1fda8f45e57d458c64f764ec6fa2a78",
+   "retrieved": "2026-11-27T05:03:30+00:00"
+  },
+  "EIA930_Reference_Tables.xlsx": {
+   "url": "https://www.eia.gov/electricity/930-content/EIA930_Reference_Tables.xlsx",
+   "bytes": 45262,
+   "sha256": "6c8f8260dfb15405f749a764da567350903b18204d656956d2307d3906cc1b48",
+   "retrieved": "2026-11-27T05:03:30+00:00"
+  },
+  "atlas_catalog.json": {
+   "url": "https://services7.arcgis.com/FGr1D95XCGALKXqM/arcgis/rest/services; https://services2.arcgis.com/vHeD2bHG1G3sW5YZ/arcgis/rest/services; https://services.arcgis.com/xOi1kZaI0eWDREZv/arcgis/rest/services",
+   "bytes": 44280,
+   "sha256": "d17d242f5793efec7af39685a80d4540c60f3ef8db1f2a24f241d79ddf135274",
+   "retrieved": "2026-11-27T05:03:33+00:00"
+  },
+  "gas_pipelines.geojson": {
+   "url": "https://services2.arcgis.com/vHeD2bHG1G3sW5YZ/arcgis/rest/services/NaturalGas_InterIntrastate_Pipelines_US_EIA_ExportFeatures/FeatureServer/0/query",
+   "bytes": 10623873,
+   "sha256": "f8e006baa06e44d1f6127858879060a5234d089ac0c06909c78ad1fcd9a4eaeb",
+   "retrieved": "2026-11-27T05:03:38+00:00"
+  },
+  "crude_pipelines.geojson": {
+   "url": "https://services5.arcgis.com/vNzamREXvX2WcX6d/arcgis/rest/services/EIA_Crude_Oil_Pipeline/FeatureServer/0/query",
+   "bytes": 94814,
+   "sha256": "e19f2a453ad60e94f1bb7afde5e2d89eacd881d5e16ba5655cf514ec799b0820",
+   "retrieved": "2026-11-27T05:04:52+00:00"
+  },
+  "refineries.geojson": {
+   "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Petroleum_Refineries_US_EIA__1544220956852457142/FeatureServer/0/query",
+   "bytes": 50097,
+   "sha256": "6e24b8cf45e5f0eeac439c6ad0efdfd9a23e5a73a8f48a5b2a635b5067a5854b",
+   "retrieved": "2026-11-27T05:03:39+00:00"
+  },
+  "gas_storage.geojson": {
+   "url": "https://services1.arcgis.com/ajkPMiuiqxF9xEgP/arcgis/rest/services/Natural_Gas_Underground_Storage_US_EIA/FeatureServer/0/query",
+   "bytes": 230776,
+   "sha256": "489d3df9ad5d286d6ce56de7f721519c2c36ecfbd137736eaa8670ea75c1b464",
+   "retrieved": "2026-11-27T05:03:39+00:00"
+  },
+  "lng.geojson": {
+   "url": "https://services.arcgis.com/xOi1kZaI0eWDREZv/arcgis/rest/services/LNG_Refueling_Station/FeatureServer/0/query",
+   "bytes": 86653,
+   "sha256": "451110d71d24ba8b3fc9871a05e9cae2b3320c9a54036579e1bcda310da5aa5c",
+   "retrieved": "2026-11-27T05:03:39+00:00"
+  },
+  "lbnl_queue.xlsx": {
+   "url": "https://eta-publications.lbl.gov/sites/default/files/2026-05/lbnl_ix_queue_data_file_thru2025.xlsx",
+   "bytes": 15571236,
+   "sha256": "794582d3281c6a305e9615fcfec3fae9dc85be2165216d33760b677e976a08b6",
+   "retrieved": "2026-11-27T05:05:11+00:00"
+  },
+  "_world.json": {
+   "url": "built by pipeline world",
+   "bytes": 478211
+  },
+  "osm_data_centers.json": {
+   "url": "https://overpass-api.de/api/interpreter",
+   "bytes": 725443,
+   "sha256": "1d2f9302fdf3e842567729086d931b3bedef68c9ce306901c955b1316f49f971",
+   "retrieved": "2026-11-27T05:06:09+00:00"
+  },
+  "eia_retail_prices.xlsx": {
+   "url": "https://www.eia.gov/electricity/monthly/xls/table_5_06_a.xlsx",
+   "bytes": 19710,
+   "sha256": "136b5c59a42e5a731e79d9a6703b46f2f16bd3c2e39e985f7f236a0a6ba302ed",
+   "retrieved": "2026-11-27T05:04:53+00:00"
+  }
+ },
+ "errors": {},
+ "eia860m_month": "2026-10",
+ "eia930_period": "2026 Jul_Dec",
+ "atlas": {
+  "balancing_authorities": {
+   "service": "https://services7.arcgis.com/FGr1D95XCGALKXqM/ArcGIS/rest/services/Balancing_Authorities/FeatureServer",
+   "layer": 255
+  },
+  "gas_pipelines": {
+   "service": "https://services2.arcgis.com/vHeD2bHG1G3sW5YZ/arcgis/rest/services/NaturalGas_InterIntrastate_Pipelines_US_EIA_ExportFeatures/FeatureServer",
+   "layer": 0,
+   "name": "NaturalGas_InterIntrastate_Pipelines_US_EIA_ExportFeatures"
+  },
+  "crude_pipelines": {
+   "service": "https://services5.arcgis.com/vNzamREXvX2WcX6d/arcgis/rest/services/EIA_Crude_Oil_Pipeline/FeatureServer",
+   "layer": 0
+  },
+  "refineries": {
+   "service": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Petroleum_Refineries_US_EIA__1544220956852457142/FeatureServer",
+   "layer": 0
+  },
+  "gas_storage": {
+   "service": "https://services1.arcgis.com/ajkPMiuiqxF9xEgP/arcgis/rest/services/Natural_Gas_Underground_Storage_US_EIA/FeatureServer",
+   "layer": 0
+  },
+  "lng": {
+   "service": "https://services.arcgis.com/xOi1kZaI0eWDREZv/arcgis/rest/services/LNG_Refueling_Station/FeatureServer",
+   "layer": 0,
+   "name": "LNG_Refueling_Station"
+  }
+ },
+ "lbnl_links": [
+  "https://eta-publications.lbl.gov/sites/default/files/2026-05/lbnl_ix_queue_data_file_thru2025.xlsx"
+ ],
+ "finished": "2026-11-27T05:06:09+00:00"
+}
