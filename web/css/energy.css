@@ -1,0 +1,37 @@
+/* grid-project: the grid replay panel and the voice switch (web/js/ext/energy). Colours follow style.css. */
+.en-panel { display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 18px; color: #eee6d2; font-size: 13px; overflow-y: auto; height: 100%; box-sizing: border-box; }
+.en-head { position: relative; padding-right: 28px; }
+.en-head h2 { margin: 0; font: 600 18px/1.2 "Palatino Linotype", Palatino, Georgia, serif; letter-spacing: 0.02em; }
+.en-head p { margin: 3px 0 0; }
+.en-close { position: absolute; top: 0; right: 0; background: none; border: 0; color: #cfc6b0; font-size: 16px; cursor: pointer; }
+.en-clock { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px; }
+.en-time { font-weight: 600; font-variant-numeric: tabular-nums; margin-bottom: 8px; }
+.en-controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.en-btn { background: #2a3441; border: 1px solid #44536a; color: #f1ead6; border-radius: 6px; padding: 4px 9px; cursor: pointer; font-size: 13px; }
+.en-btn:hover { background: #34425a; }
+.en-play { min-width: 40px; font-weight: 700; }
+.en-speed { background: #2a3441; color: #f1ead6; border: 1px solid #44536a; border-radius: 6px; padding: 3px 4px; margin-left: auto; }
+.en-slider { width: 100%; accent-color: #ffd166; }
+.en-sec h3 { margin: 0 0 6px; font-size: 15px; }
+.en-sec h4 { margin: 10px 0 5px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #c9bfa6; }
+.en-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+.en-kpis div { background: rgba(255, 255, 255, 0.04); border-radius: 6px; padding: 6px 8px; }
+.en-kpis span { display: block; font-size: 11px; color: #b9af97; }
+.en-kpis b { font-size: 14px; font-variant-numeric: tabular-nums; }
+.en-bar { display: flex; height: 14px; border-radius: 4px; overflow: hidden; background: #333; }
+.en-bar span { display: block; height: 100%; }
+.en-legend { list-style: none; padding: 0; margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; }
+.en-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.en-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 3px; }
+.en-list li { display: flex; gap: 6px; align-items: baseline; }
+.en-list li b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.en-link { background: none; border: 0; padding: 0; color: #ffd166; font-weight: 700; cursor: pointer; font-size: 13px; }
+.en-link:hover { text-decoration: underline; }
+.en-spark { width: 100%; height: 46px; display: block; }
+.en-spark-axis { display: flex; justify-content: space-between; font-size: 11px; }
+.en-foot { border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 8px; line-height: 1.4; }
+.small { font-size: 11.5px; }
+body.voice-story .en-head h2 { color: #ffd98a; }
+#btn-voice[aria-pressed="true"] { background: #4a3a1a; border-color: #8a6a2a; }
+#btn-voice .lbl, #btn-replay .lbl { display: inline !important; margin-left: 4px; }
+#btn-voice, #btn-replay { width: auto !important; padding: 0 9px; }

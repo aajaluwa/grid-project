@@ -1,0 +1,66 @@
+name: Build and deploy the site
+
+# Rebuilds the energy data (python -m energy build) from the `raw` branch, checks every milestone gate, commits
+# web/data back to main when it changed, and publishes web/ to GitHub Pages.
+# Runs after each raw-data fetch (monthly), on pushes that touch the site or the energy build, and on demand.
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Fetch raw energy data"]
+    types: [completed]
+  push:
+    branches: [main]
+    paths: ["web/**", "energy/**", "pipeline/**", ".github/workflows/build-site.yml"]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: build-site
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: astral-sh/setup-uv@v6
+      - name: Get the raw data
+        run: |
+          git fetch --depth 1 origin raw
+          git archive FETCH_HEAD raw | tar -x
+          ls -la raw
+      - name: Build the energy data
+        run: uv run python -m energy build --raw raw
+      - name: Check the gates
+        run: |
+          uv run python -m energy check
+          uv run python -m pipeline check
+          uv run python -m unittest discover -s tests
+      - name: Commit refreshed data
+        run: |
+          git config user.name "grid-project-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/data
+          if git diff --cached --quiet; then echo "data unchanged"; else
+            git commit -q -m "Refresh energy data $(date -u +%F)" && git push origin HEAD:main; fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

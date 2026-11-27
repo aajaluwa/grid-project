@@ -51,8 +51,8 @@ export function lensValueAt(lens, t) {
 }
 
 const TERRAIN = { id: null, icon: "terrain", emoji: "🗺️", name: "Terrain" };
-const RECENT_KEY = "civusa.recentLenses";
-const DEFAULT_RECENT = ["density", "income", "bachelors"];
+const RECENT_KEY = "gridproject.recentLenses";
+const DEFAULT_RECENT = ["fuel_main", "grid_operator", "queue_gw"];
 const BINS = 40;
 const HOVER_HALF = 0.08; // half-width of the hover band, in ramp units
 const QUANT = 80; // band edges snap to 1/80 of the ramp so tiny mouse moves don't re-render the map

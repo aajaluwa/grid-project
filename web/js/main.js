@@ -50,14 +50,22 @@ const SELECT_ANIM_MS = 33; // ~30 fps while a state's border highlight animates
 const isMobile = () => matchMedia("(max-width: 700px)").matches;
 
 async function main() {
-  const [world, cities, nation, lenses, sources, resources, statesData] = await Promise.all([
+  const [world, cities, nation, lenses, sources, resources, statesData, energyLenses] = await Promise.all([
     loadJSON("world"), loadJSON("cities"), loadJSON("nation"),
     loadJSON("lenses", true), loadJSON("sources", true), loadJSON("resources", true), loadJSON("states", true),
+    loadJSON("energy_lenses", true),
   ]);
   const lensFile = lenses && Array.isArray(lenses.lenses) ? lenses : { vintage: "", groups: [], lenses: [] };
+  // grid-project: the energy lenses (energy/lenses.py) go first in the dock, ahead of usaciv's own.
+  if (energyLenses && Array.isArray(energyLenses.lenses)) {
+    const ids = new Set(energyLenses.lenses.map((l) => l.id));
+    lensFile.lenses = [...energyLenses.lenses, ...lensFile.lenses.filter((l) => !ids.has(l.id))];
+    const gids = new Set(energyLenses.groups.map((g) => g.id));
+    lensFile.groups = [...energyLenses.groups, ...lensFile.groups.filter((g) => !gids.has(g.id))];
+  }
   const w = prepareWorld(world, cities, { resources });
   const state = {
-    cities, lens: null, band: null, hoverCell: -1, selectedCity: null, selectedState: null, showResources: !!w.resources,
+    cities, lens: null, band: null, hoverCell: -1, selectedCity: null, selectedState: null, showResources: false, // grid-project: every plant is drawn by ext/energy; the thresholded icons start off
     highlight: null, // {cells?, cities?, states?, resources?, dimOthers?, color?} (render/overlays.js)
     resourceFilter: null, // {types?: Set<typeId>, minValue?: number}
   };

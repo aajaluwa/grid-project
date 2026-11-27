@@ -173,8 +173,12 @@ CRUDE_CANDIDATES = [
     "https://services1.arcgis.com/LjEDDFoKcMteM7QH/arcgis/rest/services/Crude_Oil_Pipelines/FeatureServer",
 ]
 KNOWN = {
-    "refineries": (f"{EIA_ORG}/Petroleum_Refineries_US_EIA/FeatureServer", None),
-    "gas_storage": (f"{EIA_ORG}/Natural_Gas_Underground_Storage/FeatureServer", None),
+    # EIA's own copies answer HTTP 400 to anonymous queries; these ArcGIS Online re-hosts of the same EIA-820 and
+    # EIA-191 layers answer. A failed download keeps the last good file (the workflow restores raw/ first).
+    "refineries": ("https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/"
+                   "Petroleum_Refineries_US_EIA__1544220956852457142/FeatureServer", 0),
+    "gas_storage": ("https://services1.arcgis.com/ajkPMiuiqxF9xEgP/arcgis/rest/services/"
+                    "Natural_Gas_Underground_Storage_US_EIA/FeatureServer", 0),
 }
 SEARCH = {
     "refineries": "Petroleum Refineries",
