@@ -282,6 +282,16 @@ def crude_pipelines():
     raise RuntimeError("no national crude pipeline layer answered")
 
 
+@step("eia_retail_prices")
+def eia_retail_prices():
+    # Electric Power Monthly, Table 5.6.A: average retail price of electricity by state and sector (cents/kWh)
+    url = "https://www.eia.gov/electricity/monthly/xls/table_5_06_a.xlsx"
+    body = get(url)
+    if body[:2] != b"PK":
+        raise RuntimeError("Table 5.6.A is not a workbook")
+    save("eia_retail_prices.xlsx", body, url)
+
+
 @step("lbnl_queue")
 def lbnl_queue():
     hdr = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36",
@@ -346,7 +356,7 @@ def main(argv):
                 MANIFEST.setdefault(k, json.loads(prev.read_text()).get(k))
         except ValueError:
             pass
-    steps = {"eia_860m": eia_860m, "eia_930": eia_930, "eia_atlas": eia_atlas, "crude_pipelines": crude_pipelines, "lbnl_queue": lbnl_queue,
+    steps = {"eia_860m": eia_860m, "eia_930": eia_930, "eia_atlas": eia_atlas, "crude_pipelines": crude_pipelines, "eia_retail_prices": eia_retail_prices, "lbnl_queue": lbnl_queue,
              "osm_data_centers": osm_data_centers, "world_interim": world_interim}
     for name in (argv or list(steps)):
         steps[name]()
