@@ -140,7 +140,12 @@ def arcgis_geojson(service_url: str, layer: int, name: str, offset: float = 0.01
     while True:
         params = q.replace("resultOffset=0", f"resultOffset={offset_n}")
         url = f"{service_url}/{layer}/query?{params}"
-        d = json.loads(get(url))
+        try:
+            d = json.loads(get(url))
+        except RuntimeError:
+            simple = urllib.parse.urlencode({"where": "1=1", "outFields": fields, "outSR": 4326, "f": "geojson",
+                                             "resultOffset": offset_n})
+            d = json.loads(get(f"{service_url}/{layer}/query?{simple}"))
         if "error" in d:
             raise RuntimeError(f"{name}: {d['error']}")
         batch = d.get("features", [])
@@ -161,20 +166,23 @@ ORGS = ["https://services7.arcgis.com/FGr1D95XCGALKXqM/arcgis/rest/services",
 EIA_ORG = "https://services7.arcgis.com/FGr1D95XCGALKXqM/arcgis/rest/services"
 # EIA Energy Atlas layers that its public service listing hides but that answer anonymous queries. Balancing-authority
 # boundaries are no longer public (token required): territories are derived from EIA-860M plant registrations instead.
+CRUDE_CANDIDATES = [
+    f"{EIA_ORG}/CrudeOil_Pipelines_US_EIA/FeatureServer",
+    "https://services6.arcgis.com/LUfLUpH7tPVKQsyI/arcgis/rest/services/Crude_Oil_Pipelines_US_/FeatureServer",
+    "https://services5.arcgis.com/vNzamREXvX2WcX6d/arcgis/rest/services/EIA_Crude_Oil_Pipeline/FeatureServer",
+    "https://services1.arcgis.com/LjEDDFoKcMteM7QH/arcgis/rest/services/Crude_Oil_Pipelines/FeatureServer",
+]
 KNOWN = {
-    "crude_pipelines": (f"{EIA_ORG}/CrudeOil_Pipelines_US_EIA/FeatureServer", None),
     "refineries": (f"{EIA_ORG}/Petroleum_Refineries_US_EIA/FeatureServer", None),
     "gas_storage": (f"{EIA_ORG}/Natural_Gas_Underground_Storage/FeatureServer", None),
 }
 SEARCH = {
-    "crude_pipelines": "Crude Oil Pipelines",
     "refineries": "Petroleum Refineries",
     "gas_storage": "Natural Gas Underground Storage",
     "lng": "LNG Import Export Terminals",
 }
 WANT = {
     "gas_pipelines": re.compile(r"NaturalGas.*(Inter|Pipeline)", re.I),
-    "crude_pipelines": re.compile(r"Crude.*Pipeline", re.I),
     "refineries": re.compile(r"Refiner", re.I),
     "gas_storage": re.compile(r"(Underground.*Storage|Storage_Fields|NaturalGas_Storage)", re.I),
     "lng": re.compile(r"LNG", re.I),
@@ -249,6 +257,27 @@ def eia_atlas():
             MANIFEST["errors"][f"atlas_{key}"] = str(exc)[:300]
 
 
+@step("crude_pipelines")
+def crude_pipelines():
+    for svc in CRUDE_CANDIDATES:
+        try:
+            meta = json.loads(get(svc + "?f=json"))
+            layer = (meta.get("layers") or [{"id": 0}])[0]["id"]
+            arcgis_geojson(svc, layer, "crude_try", offset=0.01)
+            d = json.loads((OUT / "crude_try.geojson").read_text())
+            if len(d["features"]) >= 50:
+                (OUT / "crude_try.geojson").rename(OUT / "crude_pipelines.geojson")
+                MANIFEST["files"]["crude_pipelines.geojson"] = MANIFEST["files"].pop("crude_try.geojson")
+                MANIFEST.setdefault("atlas", {})["crude_pipelines"] = {"service": svc, "layer": layer}
+                return
+            print(f"  {svc}: only {len(d['features'])} features")
+        except Exception as exc:  # noqa: BLE001
+            print(f"  {svc}: {exc}")
+    (OUT / "crude_try.geojson").unlink(missing_ok=True)
+    MANIFEST["files"].pop("crude_try.geojson", None)
+    raise RuntimeError("no national crude pipeline layer answered")
+
+
 @step("lbnl_queue")
 def lbnl_queue():
     hdr = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36",
@@ -305,7 +334,15 @@ def world_interim():
 
 def main(argv):
     OUT.mkdir(exist_ok=True)
-    steps = {"eia_860m": eia_860m, "eia_930": eia_930, "eia_atlas": eia_atlas, "lbnl_queue": lbnl_queue,
+    prev = OUT / "MANIFEST.json"
+    if prev.exists():
+        try:
+            MANIFEST["files"].update(json.loads(prev.read_text()).get("files", {}))
+            for k in ("eia860m_month", "eia930_period", "atlas"):
+                MANIFEST.setdefault(k, json.loads(prev.read_text()).get(k))
+        except ValueError:
+            pass
+    steps = {"eia_860m": eia_860m, "eia_930": eia_930, "eia_atlas": eia_atlas, "crude_pipelines": crude_pipelines, "lbnl_queue": lbnl_queue,
              "osm_data_centers": osm_data_centers, "world_interim": world_interim}
     for name in (argv or list(steps)):
         steps[name]()

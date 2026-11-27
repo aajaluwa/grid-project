@@ -32,6 +32,9 @@ jobs:
           uv run python -m pipeline fetch census_boundaries natural_earth etopo nlcd
           uv run python -m pipeline process census_boundaries natural_earth etopo nlcd
           uv run python -m pipeline build world --force
+      - name: Restore the previous raw files (a failed download keeps the last good copy)
+        run: |
+          git fetch --depth 1 origin raw && git checkout FETCH_HEAD -- raw/ && git reset -q raw/ || echo "no raw branch yet"
       - name: Fetch energy sources
         run: python3 dev/fetch_raw.py
       - name: Commit raw/ to the raw branch
