@@ -1,0 +1,45 @@
+name: Fetch raw energy data
+
+# Downloads every energy source on GitHub's open network (EIA, LBNL, OpenStreetMap, the EIA Energy Atlas)
+# and commits them to the orphan branch `raw`. The site build (build-site.yml) reads that branch, so the
+# data can be rebuilt from anywhere that can reach github.com.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["dev/fetch_raw.py", ".github/workflows/fetch-raw.yml"]
+  schedule:
+    - cron: "23 7 4 * *" # 07:23 UTC on the 4th of every month (EIA-860M lands late in the month before)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fetch-raw
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Build the hex world (usaciv pipeline)
+        continue-on-error: true
+        run: |
+          uv run python -m pipeline fetch census_boundaries natural_earth etopo nlcd
+          uv run python -m pipeline process census_boundaries natural_earth etopo nlcd
+          uv run python -m pipeline build world --force
+      - name: Fetch energy sources
+        run: python3 dev/fetch_raw.py
+      - name: Commit raw/ to the raw branch
+        run: |
+          git config user.name "grid-project-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan raw-tmp
+          git rm -rf --cached . > /dev/null
+          git add -f raw/
+          git commit -q -m "raw energy data $(date -u +%FT%TZ)"
+          git push -f origin HEAD:raw
