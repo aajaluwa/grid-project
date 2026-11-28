@@ -22,7 +22,15 @@ generation within 2%.
 ## energy_lenses.json (at start; merged into the lens dock by main.js)
 Same shape as `lenses.json`. Groups `energy`, `capital`. Lenses: `cap_mw`, `fuel_main` (category), `clean_share`,
 `planned_mw`, `retiring_mw`, `retired_mw`, `grid_operator` (category), `queue_gw`, `queue_type` (category),
-`datacenters`. `queue` = summary of the LBNL active queue (MW by type, unplaced MW).
+`datacenters`, `price_res`, `price_res_change`. `queue` = summary of the LBNL active queue (MW by type, unplaced
+MW). Optional per-lens `decimals` (an energy addition): fixed decimals in tooltips for `float` lenses, so
+`price_res` reads 31.29 rather than 31 (legend ticks keep one decimal).
+
+## M5 tests
+`python -m energy m5-key` prints the human test's answer key from web/data (regenerate it before every session;
+the data change monthly). `tests/test_energy_m5.py` checks the key's rules against the browser's formats;
+`tests/e2e/test_m5_browser.py` (Playwright) checks the voice switch and that each answer is on screen where a
+tester would look. CI runs both before deploying.
 
 ## energy_infra.json (after the first frame, < 300 kB)
 `pipes = {classes[], links: [[cell a, cell b, class index]]}` (gas interstate, gas intrastate, crude), rasterised

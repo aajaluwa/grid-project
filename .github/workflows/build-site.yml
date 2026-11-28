@@ -11,7 +11,7 @@ on:
     types: [completed]
   push:
     branches: [main]
-    paths: ["web/**", "energy/**", "pipeline/**", ".github/workflows/build-site.yml"]
+    paths: ["web/**", "energy/**", "pipeline/**", "tests/**", ".github/workflows/build-site.yml"]
 
 permissions:
   contents: write
@@ -44,6 +44,15 @@ jobs:
           uv run python -m energy check
           uv run python -m pipeline check
           uv run python -m unittest discover -s tests
+      - name: M5 browser tests (voice switch, and the human test's answers on screen)
+        env:
+          REQUIRE_E2E: "1"
+        run: |
+          # the runner image ships Chrome; fall back to Playwright's Chromium if it ever stops doing so
+          if [ -x /usr/bin/google-chrome ]; then export CHROME_PATH=/usr/bin/google-chrome
+          else uv run --with playwright python -m playwright install --with-deps chromium; fi
+          uv run --with playwright python -m unittest discover -s tests/e2e -v
+          uv run python -m energy m5-key
       - name: Commit refreshed data
         run: |
           git config user.name "grid-project-bot"

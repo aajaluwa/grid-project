@@ -37,7 +37,7 @@ def pct_domain(values, log=False):
 
 
 def lens(id, name, unit, values, *, group="energy", fmt="float", scale="linear", ramp=None, higher="neutral",
-         source="eia_860m_full", description="", note=None, emoji="⚡", domain=None, categories=None):
+         source="eia_860m_full", description="", note=None, emoji="⚡", domain=None, categories=None, decimals=None):
     out = {"id": id, "group": group, "name": name, "icon": f"l-{id}", "emoji": emoji, "unit": unit, "format": fmt,
            "scale": scale, "ramp": ramp or LOG_RAMP, "higher_is": higher, "source": source,
            "description": description, "values": values}
@@ -50,6 +50,8 @@ def lens(id, name, unit, values, *, group="energy", fmt="float", scale="linear",
         out["domain"] = domain or pct_domain(values, scale == "log")
     if note:
         out["note"] = note
+    if decimals is not None:
+        out["decimals"] = decimals  # fixed decimals in tooltips (web/js/ui/lenses.js formatLensValue)
     return out
 
 
@@ -232,7 +234,7 @@ def retail_prices(world, raw: Path):
     print(f"    retail prices: {len(cur)} states, {month}")
     return [
         lens("price_res", "Household power price", "cents per kWh", price, group="capital", fmt="float", ramp=RED_RAMP,
-             higher="bad", source="eia_retail_prices", emoji="💡", description=desc,
+             higher="bad", source="eia_retail_prices", emoji="💡", description=desc, decimals=2,
              note=f"{month}; one value per state, so a utility's own rate can differ a lot."),
         lens("price_res_change", "Price change in a year", "change vs a year earlier", change, group="capital",
              fmt="pct", ramp=["#1f5f8a", "#7cc4e4", "#f2f2f2", "#e8774a", "#7f2a26"], higher="bad",

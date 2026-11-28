@@ -1,5 +1,6 @@
 """Energy build:  python -m energy build --raw RAW_DIR      (RAW_DIR = a checkout of the `raw` branch's raw/)
                 python -m energy check
+                python -m energy m5-key [--json]   (answer key for the M5 human test, see energy/m5.py)
 
 Writes web/data/plants.json, grid.json, energy_lenses.json, energy_infra.json, and adds the energy sources to
 sources.json so the Almanac cites them. `check` prints the milestone gates (PASS / NOTE / WARN / FAIL; FAIL exits 1).
@@ -127,11 +128,17 @@ def check() -> int:
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="python -m energy")
-    ap.add_argument("command", choices=["build", "check"])
+    ap.add_argument("command", choices=["build", "check", "m5-key"])
+    ap.add_argument("--json", action="store_true", help="m5-key: print JSON instead of markdown")
     ap.add_argument("--raw", default="raw", help="directory holding the raw files (the raw branch's raw/)")
     a = ap.parse_args(argv)
     if a.command == "build":
         build(Path(a.raw))
+        return 0
+    if a.command == "m5-key":
+        from .m5 import answer_key, to_markdown
+        key = answer_key()
+        print(json.dumps(key, indent=1) if a.json else to_markdown(key))
         return 0
     return check()
 

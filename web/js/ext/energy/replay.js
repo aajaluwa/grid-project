@@ -248,7 +248,7 @@ export function createReplay(app, voice) {
     if (selected && grid.hourly.demand[selected]) {
       const b = grid.bas.find((x) => x.id === selected) || { id: selected, name: selected };
       const d = val(grid.hourly.demand[selected], h);
-      const mix = mixAt(selected, h);
+      const mix = mixAt(selected, h).sort((a, b) => b[1] - a[1]); // largest fuel first, as for the lower 48
       const gen = mix.reduce((a, [, v]) => a + v, 0);
       const net = netFlow(selected, h);
       const flows = (flowsByBa.get(selected) || []).map((f) => {
@@ -336,7 +336,7 @@ export function createReplay(app, voice) {
       go._t = setTimeout(render, 120);
     } else render();
     app.requestDraw();
-    app.hash?.schedule?.();
+    app.hash?.update?.(); // keep the hour in the URL (#replay=<hour>)
   }
   function start() {
     playing = true;

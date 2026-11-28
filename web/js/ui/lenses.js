@@ -21,7 +21,8 @@ export function formatLensValue(lens, v) {
     case "int": return intish(v) + (lens.unit?.startsWith("people") ? " /km²" : lens.unit ? " " + lens.unit : "");
     case "minutes": return v.toFixed(0) + " min";
     case "years": return v.toFixed(1) + " yrs";
-    case "float": return (v < 10 ? v.toFixed(1) : compact(v)) + (lens.unit ? " " + lens.unit : "");
+    case "float": // `decimals` (optional) fixes the precision, e.g. prices in cents that differ by tenths
+      return (Number.isInteger(lens.decimals) ? v.toFixed(lens.decimals) : v < 10 ? v.toFixed(1) : compact(v)) + (lens.unit ? " " + lens.unit : "");
   }
   if (lens.unit?.includes("$")) return "$" + compact(v);
   return (v < 10 ? v.toFixed(1) : compact(v)) + (lens.unit?.startsWith("people") ? " /km²" : "");
@@ -33,8 +34,9 @@ export function formatLensValue(lens, v) {
 export function formatLensTick(lens, t, k = -1) {
   const raw = lensValueAt(lens, t);
   const v = lens.format === "int" && Number.isFinite(raw) ? Math.round(raw) : raw; // a count never reads "4.5"
-  const short = (lens.format === "int" || lens.format === "float") && lens.unit && lens.unit.length > 4
+  let short = (lens.format === "int" || lens.format === "float") && lens.unit && lens.unit.length > 4
     && !(lens.format === "int" && lens.unit.startsWith("people")) ? { ...lens, unit: null } : lens;
+  if (Number.isInteger(short.decimals) && short.decimals > 1) short = { ...short, decimals: 1 }; // ticks stay short
   let s = formatLensValue(short, v);
   const zero = Number.isFinite(v) && Math.abs(v) < 1e-9;
   if (zero) s = s.replace(/^(\$?)0\.0+(?!\d)/, (_, d) => d + "0");
